@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เครื่องคำนวณราคาข้าวโพด</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f6f5f0;--card:#ffffff;--text:#1f2a24;--muted:#6b756e;--line:#e0ded4;
+  --accent:#2f7d4f;--accent-soft:#e3f1e8;--warn:#b45309;--warn-soft:#fdf0dc;--input:#fbfbf8;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#161b18;--card:#1f2622;--text:#e8ede9;--muted:#98a39b;--line:#323b35;
+    --accent:#5fbf86;--accent-soft:#1e3327;--warn:#f0b35a;--warn-soft:#3a2d17;--input:#171d19;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161b18;--card:#1f2622;--text:#e8ede9;--muted:#98a39b;--line:#323b35;
+  --accent:#5fbf86;--accent-soft:#1e3327;--warn:#f0b35a;--warn-soft:#3a2d17;--input:#171d19;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Thai","Sarabun",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.35rem;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:14px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tab{flex:1;min-width:140px;padding:10px 8px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;font:inherit;font-weight:600;cursor:pointer}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h2{font-size:1.02rem;margin:0 0 10px}
+.row{display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:12px}
+.row label{font-size:.9rem;color:var(--muted)}
+.ctl{display:flex;gap:6px}
+.ctl input,.ctl select{font:inherit;color:var(--text);background:var(--input);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}
+.ctl input{flex:1}
+.ctl select{flex:0 0 auto}
+.ctl .suf{align-self:center;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.result{background:var(--accent-soft);border:1px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:14px}
+.result .k{font-size:.9rem;color:var(--muted)}
+.result .v{font-size:1.9rem;font-weight:700;color:var(--accent)}
+.result .u{font-size:.95rem;color:var(--text)}
+.steps{font-size:.92rem}
+.steps div{padding:6px 0;border-bottom:1px dashed var(--line)}
+.steps div:last-child{border-bottom:0}
+.steps b{font-weight:600}
+.warn{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem}
+.note{color:var(--muted);font-size:.82rem;margin-top:6px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tr.hi td{background:var(--accent-soft);font-weight:600}
+.two{display:grid;grid-template-columns:1fr;gap:0 12px}
+@media(min-width:620px){.two{grid-template-columns:1fr 1fr}}
+/* mobile-first touch targets (min 44px) */
+.ctl input,.ctl select{min-height:48px;padding:11px 12px;font-size:16px;border-radius:10px}
+.tab{min-height:48px;font-size:1rem}
+.ctl input[readonly]{background:var(--accent-soft);font-weight:600}
+.ovens{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.oven-chip{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--input);cursor:pointer}
+.oven-chip input{width:24px;height:24px;flex:0 0 auto;accent-color:var(--accent)}
+.oven-chip small{display:block;color:var(--muted)}
+.capbox{margin-top:8px;font-weight:600;color:var(--accent)}
+.btn{display:block;width:100%;min-height:52px;border:0;border-radius:12px;background:var(--accent);color:#fff;font:inherit;font-size:1.05rem;font-weight:700;cursor:pointer;margin-bottom:12px}
+.btn:disabled{opacity:.6}
+#capture{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+#capture .ttl{font-weight:700;font-size:1.05rem;margin-bottom:4px}
+#capture .meta{color:var(--muted);font-size:.85rem;margin-bottom:10px}
+#capture .sum{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:12px;margin-bottom:10px;font-weight:700;font-size:1.1rem;color:var(--accent)}
+#imgout img{max-width:100%;border-radius:12px;border:1px solid var(--line)}
+@media(max-width:480px){.ovens{grid-template-columns:1fr 1fr}.result .v{font-size:1.7rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>เครื่องคำนวณราคาข้าวโพด</h1>
+  <div class="sub">กรอกตัวเลขในช่องสีขาว ผลลัพธ์ขึ้นอัตโนมัติ พร้อมแสดงวิธีคิด</div>
+  <div class="tabs">
+    <button class="tab on" data-p="p1">1) ราคารับซื้อ</button>
+    <button class="tab" data-p="p2">2) ราคาขาย</button>
+    <button class="tab" data-p="p3">3) คอร์สต้นทุนอบ</button>
+  </div>
+
+  <!-- ===== PART 1 ===== -->
+  <div class="panel on" id="p1">
+    <div class="card">
+      <h2>ข้อมูลตั้งต้น</h2>
+      <div class="two">
+        <div class="row"><label>ราคาปลายทาง</label><div class="ctl"><input id="a_price" type="number" step="any" inputmode="decimal" placeholder="เช่น 10.50"><span class="suf">บาท/กก.</span></div></div>
+        <div class="row"><label>ที่ความชื้น</label><div class="ctl"><input id="a_moist" type="number" step="any" inputmode="decimal" placeholder="เช่น 14.5"><span class="suf">%</span></div></div>
+        <div class="row"><label>ค่าขนส่ง</label><div class="ctl"><input id="a_frz" type="number" step="any" inputmode="decimal"><select id="a_frzu"><option value="ton">ต่อตัน</option><option value="kg">ต่อกิโล</option><option value="lump">เหมา</option></select></div></div>
+        <div class="row" id="a_loadrow" style="display:none"><label>น้ำหนักที่บรรทุกต่อเที่ยว (สำหรับค่าขนส่งแบบเหมา)</label><div class="ctl"><input id="a_load" type="number" step="any" inputmode="decimal" placeholder="เช่น 30000"><span class="suf">กก.</span></div></div>
+        <div class="row"><label>สูญหายระหว่างขนส่ง</label><div class="ctl"><input id="a_tl" type="number" step="any" inputmode="decimal"><span class="suf">%</span></div></div>
+        <div class="row"><label>ค่าจัดการ</label><div class="ctl"><input id="a_h" type="number" step="any" inputmode="decimal"><select id="a_hu"><option value="ton">ต่อตัน</option><option value="kg">ต่อกิโล</option></select></div></div>
+        <div class="row"><label>สูญหายภายในลาน</label><div class="ctl"><input id="a_yl" type="number" step="any" inputmode="decimal"><span class="suf">%</span></div></div>
+        <div class="row"><label>กำไรส่วนต่าง</label><div class="ctl"><input id="a_g" type="number" step="any" inputmode="decimal"><select id="a_gu"><option value="ton">ต่อตัน</option><option value="kg">ต่อกิโล</option></select></div></div>
+      </div>
+    </div>
+    <div class="result"><div class="k">ควรตั้งราคารับซื้อ</div><div><span class="v" id="a_out">–</span> <span class="u">บาท/กก.</span></div><div class="u" id="a_outm"></div></div>
+    <div class="card"><h2>วิธีคิด</h2><div class="steps" id="a_steps"></div>
+      <div class="note">ค่าขนส่ง ค่าจัดการ และกำไร คิดต่อ "กก. ที่รับซื้อ" ทุกข้อ</div></div>
+  </div>
+
+  <!-- ===== PART 2 ===== -->
+  <div class="panel" id="p2">
+    <div class="card">
+      <h2>ข้อมูลตั้งต้น</h2>
+      <div class="two">
+        <div class="row"><label>ราคาซื้อเข้า</label><div class="ctl"><input id="b_price" type="number" step="any" inputmode="decimal" placeholder="เช่น 8.80"><span class="suf">บาท/กก.</span></div></div>
+        <div class="row"><label>ที่ความชื้น</label><div class="ctl"><input id="b_moist" type="number" step="any" inputmode="decimal" placeholder="เช่น 14.5"><span class="suf">%</span></div></div>
+        <div class="row"><label>สูญหายภายในลาน</label><div class="ctl"><input id="b_yl" type="number" step="any" inputmode="decimal"><span class="suf">%</span></div></div>
+        <div class="row"><label>ค่าจัดการ</label><div class="ctl"><input id="b_h" type="number" step="any" inputmode="decimal"><select id="b_hu"><option value="ton">ต่อตัน</option><option value="kg">ต่อกิโล</option></select></div></div>
+        <div class="row"><label>ค่าขนส่ง (กรณีไปส่งเอง)</label><div class="ctl"><input id="b_frz" type="number" step="any" inputmode="decimal"><select id="b_frzu"><option value="ton">ต่อตัน</option><option value="kg">ต่อกิโล</option><option value="lump">เหมา</option></select></div></div>
+        <div class="row" id="b_loadrow" style="display:none"><label>น้ำหนักที่บรรทุกต่อเที่ยว (สำหรับค่าขนส่งแบบเหมา)</label><div class="ctl"><input id="b_load" type="number" step="any" inputmode="decimal" placeholder="เช่น 30000"><span class="suf">กก.</span></div></div>
+        <div class="row"><label>สูญหายระหว่างขนส่ง</label><div class="ctl"><input id="b_tl" type="number" step="any" inputmode="decimal"><span class="suf">%</span></div></div>
+        <div class="row"><label>กำไรส่วนต่าง</label><div class="ctl"><input id="b_g" type="number" step="any" inputmode="decimal"><select id="b_gu"><option value="ton">ต่อตัน</option><option value="kg">ต่อกิโล</option></select></div></div>
+      </div>
+    </div>
+    <div class="result"><div class="k">ควรตั้งราคาขาย</div><div><span class="v" id="b_out">–</span> <span class="u">บาท/กก.</span></div><div class="u" id="b_outm"></div></div>
+    <div class="card"><h2>วิธีคิด</h2><div class="steps" id="b_steps"></div>
+      <div class="note">ราคาขาย = (ต้นทุนรวมต่อ กก. ที่ซื้อ) ÷ (สัดส่วนน้ำหนักที่เหลือถึงมือลูกค้า)</div></div>
+  </div>
+
+  <!-- ===== PART 3 ===== -->
+  <div class="panel" id="p3">
+    <div class="card">
+      <h2>เลือกตู้อบ</h2>
+      <div class="ovens">
+        <label class="oven-chip"><input type="checkbox" class="oven" data-cap="60" data-name="ตู้ 1"><span>ตู้ 1<small>60 ตัน</small></span></label>
+        <label class="oven-chip"><input type="checkbox" class="oven" data-cap="60" data-name="ตู้ 2"><span>ตู้ 2<small>60 ตัน</small></span></label>
+        <label class="oven-chip"><input type="checkbox" class="oven" data-cap="40" data-name="ตู้ 3"><span>ตู้ 3<small>40 ตัน</small></span></label>
+        <label class="oven-chip"><input type="checkbox" class="oven" data-cap="40" data-name="ตู้ 4"><span>ตู้ 4<small>40 ตัน</small></span></label>
+      </div>
+      <div class="capbox">ความจุตู้อบสูงสุดต่อรอบ: <span id="c_cap">ยังไม่ได้เลือกตู้</span></div>
+    </div>
+
+    <div class="card">
+      <h2>เนื้อสินค้า</h2>
+      <div class="two">
+        <div class="row"><label>รอบอบ (รหัส)</label><div class="ctl"><input id="c_code" type="text" placeholder="เช่น A-001"></div></div>
+        <div class="row"><label>จำนวนที่อบ</label><div class="ctl"><input id="c_w" type="number" step="any" inputmode="decimal" placeholder="เช่น 80000"><span class="suf">กก.</span></div></div>
+        <div class="row"><label>ความชื้นเฉลี่ยก่อนอบ</label><div class="ctl"><input id="c_m1" type="number" step="any" inputmode="decimal" placeholder="เช่น 25"><span class="suf">%</span></div></div>
+        <div class="row"><label>ความชื้นที่ต้องการในรอบนี้</label><div class="ctl"><input id="c_m2" type="number" step="any" inputmode="decimal" placeholder="เช่น 14.5"><span class="suf">%</span></div></div>
+        <div class="row"><label>สิ่งเจือปนเฉลี่ย (ตรวจจากตัวอย่าง)</label><div class="ctl"><input id="c_imp" type="number" step="any" inputmode="decimal" value="1"><span class="suf">%</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>เวลาการอบ</h2>
+      <div class="two">
+        <div class="row"><label>วันและเวลาที่เริ่มอบ</label><div class="ctl"><input id="c_start" type="datetime-local"></div></div>
+        <div class="row"><label>เวลาที่ใช้ในการอบโดยประมาณ (อัตโนมัติ)</label><div class="ctl"><input id="c_hrs" type="text" readonly placeholder="–"><span class="suf">ชม.</span></div></div>
+        <div class="row"><label>วันและเวลาที่อบเสร็จจริง</label><div class="ctl"><input id="c_end" type="datetime-local"></div></div>
+        <div class="row"><label>คาดว่าอบเสร็จ (อัตโนมัติ)</label><div class="ctl"><input id="c_estend" type="text" readonly placeholder="–"></div></div>
+      </div>
+      <div class="note" id="c_actual"></div>
+    </div>
+
+    <div class="card">
+      <h2>ส่วนคำนวณราคา</h2>
+      <div class="two">
+        <div class="row"><label>ยอดเงินรวมที่จ่ายลูกค้าจริง</label><div class="ctl"><input id="c_total" type="number" step="any" inputmode="decimal" placeholder="เช่น 720000"><span class="suf">บาท</span></div></div>
+        <div class="row"><label>ต้นทุนต่อกิโลกรัมก่อนอบ (อัตโนมัติ)</label><div class="ctl"><input id="c_before" type="text" readonly placeholder="–"><span class="suf">บาท/กก.</span></div></div>
+        <div class="row"><label>ค่าอบความชื้น (× น้ำหนักก่อนอบ)</label><div class="ctl"><input id="c_dry" type="number" step="any" inputmode="decimal" value="0.4"><span class="suf">บาท/กก.</span></div></div>
+        <div class="row"><label>ค่าจัดการ (× น้ำหนักก่อนอบ)</label><div class="ctl"><input id="c_h" type="number" step="any" inputmode="decimal" value="0"><span class="suf">บาท/กก.</span></div></div>
+      </div>
+      <div class="note">ส่วนนี้เป็นคอร์สต้นทุน จึงไม่มีกำไร</div>
+    </div>
+
+    <div id="c_warn"></div>
+
+    <div id="capture"></div>
+    <button class="btn" id="c_save" type="button">📷 บันทึกเป็นรูปภาพ</button>
+    <div id="imgout"></div>
+
+    <div class="card"><h2>เทียบต้นทุนที่ความชื้นปลายทางต่างๆ</h2><div class="scroll"><table id="c_tbl"></table></div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat($(id).value);return isNaN(v)?0:v;};
+const fmt=(n,d=2)=>isFinite(n)?n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
+function perKg(val,unit,load){
+  if(unit==='ton')return val/1000;
+  if(unit==='lump')return load>0?val/load:0;
+  return val;
+}
+const unitTxt={ton:'ต่อตัน',kg:'ต่อกิโล',lump:'เหมา'};
+const S=(t,v)=>`<div>${t} <b>${v}</b></div>`;
+
+/* ---- Tabs ---- */
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');$(b.dataset.p).classList.add('on');
+}));
+
+/* ---- Part 1 ---- */
+function calc1(){
+  $('a_loadrow').style.display=$('a_frzu').value==='lump'?'grid':'none';
+  const P=num('a_price'),M=$('a_moist').value;
+  const load=num('a_load');
+  const f=perKg(num('a_frz'),$('a_frzu').value,load);
+  const h=perKg(num('a_h'),$('a_hu').value);
+  const g=perKg(num('a_g'),$('a_gu').value);
+  const t=num('a_tl')/100,y=num('a_yl')/100;
+  const keep=(1-t)*(1-y);
+  const B=P*keep-f-h-g;
+  $('a_out').textContent=P>0?fmt(B):'–';
+  $('a_outm').textContent=M!==''?`ที่ความชื้น ${M}% (ตามราคาปลายทาง)`:'';
+  $('a_steps').innerHTML=
+    S('1) น้ำหนักที่เหลือถึงปลายทาง = (1 − สูญหายขนส่ง) × (1 − สูญหายลาน) =',fmt(keep*100,2)+'% ของที่ซื้อ')+
+    S('2) รายรับต่อ 1 กก. ที่ซื้อ = ราคาปลายทาง × '+fmt(keep,4)+' =',fmt(P*keep,3)+' บาท')+
+    S('3) ค่าขนส่งต่อ กก. ('+unitTxt[$('a_frzu').value]+') =',fmt(f,3)+' บาท')+
+    S('4) ค่าจัดการต่อ กก. =',fmt(h,3)+' บาท')+
+    S('5) กำไรส่วนต่างต่อ กก. =',fmt(g,3)+' บาท')+
+    S('6) ราคารับซื้อ = ข้อ 2 − ข้อ 3 − ข้อ 4 − ข้อ 5 =',fmt(B,3)+' บาท/กก.');
+}
+
+/* ---- Part 2 ---- */
+function calc2(){
+  $('b_loadrow').style.display=$('b_frzu').value==='lump'?'grid':'none';
+  const C=num('b_price'),M=$('b_moist').value;
+  const load=num('b_load');
+  const h=perKg(num('b_h'),$('b_hu').value);
+  const f=perKg(num('b_frz'),$('b_frzu').value,load);
+  const g=perKg(num('b_g'),$('b_gu').value);
+  const t=num('b_tl')/100,y=num('b_yl')/100;
+  const keep=(1-t)*(1-y);
+  const cost=C+h+f+g;
+  const S2=keep>0?cost/keep:0;
+  $('b_out').textContent=C>0?fmt(S2):'–';
+  $('b_outm').textContent=M!==''?`ที่ความชื้น ${M}% (ตามราคาต้นทาง)`:'';
+  $('b_steps').innerHTML=
+    S('1) ราคาซื้อเข้า =',fmt(C,3)+' บาท/กก.')+
+    S('2) + ค่าจัดการ =',fmt(h,3)+' บาท')+
+    S('3) + ค่าขนส่ง ('+unitTxt[$('b_frzu').value]+') =',fmt(f,3)+' บาท')+
+    S('4) + กำไรส่วนต่าง =',fmt(g,3)+' บาท')+
+    S('5) รวมต้นทุนและกำไรต่อ 1 กก. ที่ซื้อ =',fmt(cost,3)+' บาท')+
+    S('6) น้ำหนักที่เหลือขายได้ = (1 − สูญหายลาน) × (1 − สูญหายขนส่ง) =',fmt(keep*100,2)+'%')+
+    S('7) ราคาขาย = ข้อ 5 ÷ '+fmt(keep,4)+' =',fmt(S2,3)+' บาท/กก.');
+}
+
+/* ---- Part 3 ---- */
+const dtf=d=>d.toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'});
+function estHours(M1,M2){
+  const calculatedTime = 0.09375 * Math.pow((M1 - M2), 2);
+  return Math.max(0, parseFloat(calculatedTime.toFixed(1)));
+}
+function dryCalc(W1,M1,M2,imp,total,dryFee,hFee){
+  const impKg=W1*imp;
+  const clean=W1-impKg;
+  const W2=clean*(100-M1)/(100-M2);
+  const waterKg=clean-W2;
+  const dryCost=W1*dryFee,hCost=W1*hFee;
+  const all=total+dryCost+hCost;
+  return {impKg,clean,W2,waterKg,dryCost,hCost,all,perKg:W2>0?all/W2:0,lossKg:W1-W2,lossPct:W1>0?(W1-W2)/W1*100:0};
+}
+function calc3(){
+  const ovens=[...document.querySelectorAll('.oven:checked')];
+  const capT=ovens.reduce((s,e)=>s+parseFloat(e.dataset.cap),0);
+  const names=ovens.map(e=>e.dataset.name).join(' + ');
+  $('c_cap').textContent=capT>0?`${fmt(capT,0)} ตัน (${names})`:'ยังไม่ได้เลือกตู้';
+  const W1=num('c_w'),M1=num('c_m1'),M2=num('c_m2'),imp=num('c_imp')/100;
+  const total=num('c_total'),dryFee=num('c_dry'),hFee=num('c_h');
+  $('c_before').value=W1>0&&total>0?fmt(total/W1,3):'';
+  const warns=[];
+  if(M1>0&&M2>0&&M2>=M1)warns.push('ความชื้นที่ต้องการต้องต่ำกว่าความชื้นก่อนอบ');
+  const rounds=capT>0&&W1>0?Math.ceil(W1/(capT*1000)):0;
+  if(ovens.length===0)warns.push('กรุณาเลือกตู้อบอย่างน้อย 1 ตู้');
+  else if(rounds>1)warns.push(`จำนวนที่อบเกินความจุ ${fmt(capT,0)} ตัน ต้องแบ่งอบ ${rounds} รอบ`);
+  $('c_warn').innerHTML=warns.map(w=>`<div class="warn">⚠ ${w}</div>`).join('');
+  const valid=W1>0&&M1>0&&M2>0&&M2<M1;
+  const hrs=valid?estHours(M1,M2):0;
+  $('c_hrs').value=valid?fmt(hrs,1):'';
+  const startV=$('c_start').value,endV=$('c_end').value;
+  const start=startV?new Date(startV):null,end=endV?new Date(endV):null;
+  const totalHrs=hrs*Math.max(1,rounds);
+  $('c_estend').value=valid&&start?dtf(new Date(start.getTime()+totalHrs*3600000)):'';
+  let act='';
+  if(valid&&start&&end){
+    const a=(end-start)/3600000;
+    if(a<0)act='เวลาอบเสร็จจริงต้องหลังเวลาเริ่มอบ';
+    else{const d=a-totalHrs;act=`ใช้เวลาอบจริง ${fmt(a,1)} ชม. (${d>=0?'นานกว่า':'เร็วกว่า'}ประมาณการ ${fmt(Math.abs(d),1)} ชม.)`;}
+  }
+  $('c_actual').textContent=act;
+  const cap=$('capture');
+  if(!valid){
+    cap.innerHTML='<div class="ttl">คอร์สต้นทุนอบข้าวโพด</div><div class="meta">กรอกจำนวน ความชื้นก่อนอบ และความชื้นที่ต้องการ เพื่อดูผล</div>';
+    $('c_tbl').innerHTML='';return;
+  }
+  const r=dryCalc(W1,M1,M2,imp,total,dryFee,hFee);
+  const code=$('c_code').value.trim();
+  const meta=[code?`รอบอบ ${code}`:'',names?`ตู้ ${names.replace(/ตู้ /g,'')}`:'',start?`เริ่ม ${dtf(start)}`:'',end?`เสร็จจริง ${dtf(end)}`:(start?`คาดเสร็จ ${$('c_estend').value}`:'')].filter(Boolean).join(' · ');
+  cap.innerHTML=
+    '<div class="ttl">คอร์สต้นทุนอบข้าวโพด</div>'+
+    `<div class="meta">${meta||'—'}</div>`+
+    `<div class="sum">ต้นทุนหลังอบ ที่ความชื้น ${M2}% = ${total>0?fmt(r.perKg):'–'} บาท/กก.</div>`+
+    '<div class="steps">'+
+    S('1) จำนวนที่อบ',fmt(W1,0)+' กก. (ความชื้น '+M1+'% → '+M2+'%)')+
+    S('2) สิ่งเจือปน '+fmt(imp*100,2)+'% =',fmt(r.impKg,0)+' กก.')+
+    S(`3) น้ำหนักสูญหายจากความชื้น = เนื้อ ${fmt(r.clean,0)} × (1 − (100−${M1}) ÷ (100−${M2})) =`,fmt(r.waterKg,0)+' กก.')+
+    S('4) น้ำหนักสูญหายรวม = ข้อ 2 + ข้อ 3 =',fmt(r.lossKg,0)+' กก. ('+fmt(r.lossPct,2)+'%)')+
+    S('5) น้ำหนักคงเหลือหลังอบ = '+fmt(W1,0)+' − '+fmt(r.lossKg,0)+' =',fmt(r.W2,0)+' กก.')+
+    S('6) ยอดเงินจ่ายลูกค้าจริง =',fmt(total,0)+' บาท (ต้นทุนก่อนอบ '+fmt(W1>0?total/W1:0,3)+' บาท/กก.)')+
+    S('7) ค่าอบ = '+fmt(W1,0)+' กก. × '+fmt(dryFee,2)+' =',fmt(r.dryCost,0)+' บาท')+
+    S('8) ค่าจัดการ = '+fmt(W1,0)+' กก. × '+fmt(hFee,2)+' =',fmt(r.hCost,0)+' บาท')+
+    S('9) ต้นทุนรวม = ข้อ 6 + 7 + 8 =',fmt(r.all,0)+' บาท')+
+    S('10) ต้นทุนหลังอบ = ต้นทุนรวม ÷ น้ำหนักคงเหลือ =',fmt(r.perKg,3)+' บาท/กก.')+
+    '</div>';
+  const targets=[...new Set([13,14,14.5,15,16,18,M2])].filter(x=>x<M1).sort((a,b)=>a-b);
+  let html='<tr><th>ชื้นปลายทาง</th><th>คงเหลือ (กก.)</th><th>ต้นทุน (บาท/กก.)</th><th>เวลา (ชม.)</th></tr>';
+  targets.forEach(m=>{
+    const x=dryCalc(W1,M1,m,imp,total,dryFee,hFee);
+    html+=`<tr class="${m===M2?'hi':''}"><td>${m}%</td><td>${fmt(x.W2,0)}</td><td>${total>0?fmt(x.perKg,3):'–'}</td><td>${fmt(estHours(M1,m),1)}</td></tr>`;
+  });
+  $('c_tbl').innerHTML=html;
+}
+
+/* ---- Save as image ---- */
+$('c_save').addEventListener('click',async()=>{
+  const btn=$('c_save'),out=$('imgout');
+  if(typeof html2canvas==='undefined'){out.innerHTML='<div class="warn">โหลดไลบรารีรูปภาพไม่สำเร็จ ลองรีเฟรชหน้า</div>';return;}
+  btn.disabled=true;btn.textContent='กำลังสร้างรูป...';
+  try{
+    const bg=getComputedStyle(document.documentElement).getPropertyValue('--card').trim()||'#ffffff';
+    const canvas=await html2canvas($('capture'),{backgroundColor:bg,scale:2,useCORS:true});
+    const url=canvas.toDataURL('image/png');
+    out.innerHTML='<div class="note">รูปพร้อมแล้ว หากไม่ถูกบันทึกอัตโนมัติ ให้กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"</div><img alt="สรุปคอร์สต้นทุน" src="'+url+'">';
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+    let saved=false;
+    try{
+      const dl=window.claude&&await window.claude.use('downloads');
+      const code=($('c_code').value.trim()||'corn').replace(/[^\w\u0E00-\u0E7F-]/g,'');
+      if(dl&&blob){
+        await dl.save({filename:`cost-${code}.png`,data:blob});saved=true;
+      }else if(blob){
+        const a=document.createElement('a');a.href=url;a.download=`cost-${code}.png`;
+        document.body.appendChild(a);a.click();a.remove();saved=true;
+      }
+    }catch(e){}
+  }catch(e){
+    out.innerHTML='<div class="warn">สร้างรูปไม่สำเร็จ ลองใหม่อีกครั้ง</div>';
+  }
+  btn.disabled=false;btn.textContent='📷 บันทึกเป็นรูปภาพ';
+});
+
+document.querySelectorAll('input,select').forEach(el=>{
+  el.addEventListener('input',()=>{calc1();calc2();calc3();});
+  el.addEventListener('change',()=>{calc1();calc2();calc3();});
+});
+calc1();calc2();calc3();
+</script>
+</body>
+</html>
